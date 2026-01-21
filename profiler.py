@@ -71,13 +71,12 @@ def benchmark_strategies():
         test_data = data[:size]
         print(f"\n=== {size:,} ticks ===")
 
+        results['sizes'].append(size)
+
         for name, strat_class in strategies.items():
             time_taken = measure_runtime(strat_class, test_data)
             mem_used = measure_memory(strat_class, test_data)
-
-            results['sizes'].append(size)
             results[name].append((time_taken, mem_used))
-
             print(f"  {name:12}: {time_taken:6.4f}s  {mem_used:6.2f}MB")
 
     # Flatten results for plotting
