@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # Runtime & Space Complexity Analysis
 **Moving Average Trading Strategy Optimization**  
 *O(n²) → O(1) time/space progression across 5 implementations*
@@ -53,5 +52,3 @@ python main.py
   Naive     : 423.1s 234.5MB  ← Quadratic disaster!
   Streaming :  0.01s   0.08MB  ← O(1) perfection
 \`\`\`
-
-EOF
