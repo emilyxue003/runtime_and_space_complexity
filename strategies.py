@@ -111,6 +111,7 @@ class WindowedMovingAverageStrategy(Strategy):
 class DequeNaiveStrategy(Strategy):
     def __init__(self, maxlen=1000):        # Capped to prevent O(n) memory
         self.prices = deque(maxlen=maxlen)
+        self.sum_prices = 0.0
         self.ma = None
         self.position = 0
         self.entry_price = None
@@ -121,14 +122,13 @@ class DequeNaiveStrategy(Strategy):
         signals = []
 
         # deque automatically drops oldest when maxlen reached
+        if len(self.prices) == self.prices.maxlen:
+            oldest = self.prices.popleft()
+            self.sum_prices -= oldest
+
         self.prices.append(price)
-
-        if self.ma is None:
-            self.ma = price
-            return signals
-
-        # Still O(k) time due to mean(), but k is bounded
-        self.ma = mean(self.prices)
+        self.sum_prices += price
+        self.ma = self.sum_prices / len(self.prices)
 
         if price > self.ma and self.position == 0:
             self.position = 1
@@ -161,15 +161,18 @@ class NumPyVectorizedStrategy(Strategy):
 
     def generate_signals(self, tick: MarketDataPoint) -> list:
         price = tick.price
+        idx = self.count % self.window
         signals = []
 
         # Circular buffer in NumPy array
-        if self.count == self.window:
-            self.sum_prices -= self.prices[self.count % self.window]
-
-        self.prices[self.count % self.window] = price
+        self.sum_prices -= self.prices[idx]
+        self.prices[idx] = price
         self.sum_prices += price
         self.count += 1
+
+        # Periodic resync to clear any floating-point error
+        if self.count % 10000 == 0:
+            self.sum_prices = np.sum(self.prices)
 
         if self.count == 1:
             self.ma = price
@@ -207,7 +210,6 @@ class StreamingStrategy(Strategy):
         self.entry_price = None
         self.realized_pnl = 0.0
 
-    @lru_cache(maxsize=1)  # memoize last computation
     def ema_update(self, price, prev_ma):
         if prev_ma is None:
             return price

@@ -5,16 +5,15 @@ from datetime import datetime
 import csv
 
 def load_data(path: str = "market_data.csv"):
-    datapoints = []
-
-    with open(path, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
+    """
+    Yields MarketDataPoint objects one at a time.
+    Space Complexity: O(1) regardless of file size.
+    """
+    with open(path, newline="") as file:
+        reader = csv.DictReader(file)
         for row in reader:
-            datapoint = MarketDataPoint(
+            yield MarketDataPoint(
                 timestamp=datetime.fromisoformat(row["timestamp"]),
                 symbol=row["symbol"],
                 price=float(row["price"]),
             )
-            datapoints.append(datapoint)
-
-    return datapoints

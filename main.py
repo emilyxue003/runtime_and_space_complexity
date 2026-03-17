@@ -1,5 +1,7 @@
 # Orchestrates ingestion, strategy execution, profiling
 
+from tqdm import tqdm
+import itertools
 from data_loader import load_data
 from strategies import (
     NaiveMovingAverageStrategy,
@@ -12,9 +14,8 @@ from profiler import profile_cprofile, benchmark_strategies, plot_results
 from reporting import generate_complexity_report
 
 def main():
-    # 1. Load CSV data: O(n) time to build the list, O(n) space for n ticks
-    data = load_data()
-    print(f"Loaded {len(data):,} ticks")
+    # 1. Load CSV data: O(1) space using generator stream
+    data_stream = load_data()
 
     # 2. Create strategy instances: O(1) time and space
     naive_strategy = NaiveMovingAverageStrategy()           # O(n) time per tick, O(n) space overall
@@ -24,7 +25,8 @@ def main():
     streaming_strategy = StreamingStrategy()
 
     # 3. Run strategies
-    for tick in data:
+    print("Executing strategies on live stream...")
+    for tick in tqdm(itertools.islice(data_stream, 10000), total=10000, desc="Processing Ticks"):
         naive_strategy.generate_signals(tick)
         windowed_strategy.generate_signals(tick)
         deque_strategy.generate_signals(tick)
@@ -42,7 +44,7 @@ def main():
     plot_results(results)
 
     print("\n=== cProfile: Naive Strategy (100K ticks) ===")
-    data_100k = data[:100000]
+    data_100k = list(itertools.islice(load_data(), 100000))
     profile_cprofile(NaiveMovingAverageStrategy, data_100k)
 
     print("\n=== cProfile: Windowed Strategy (100K ticks) ===")

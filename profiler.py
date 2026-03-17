@@ -1,5 +1,6 @@
 # Runtime and memory measurement
 
+import itertools
 import time
 import tracemalloc
 import matplotlib.pyplot as plt
@@ -47,8 +48,9 @@ def profile_cprofile(strategy_class, data, **kwargs):
 
 def benchmark_strategies():
     # Benchmark both strategies at 1K, 10K, 100K sizes
-    data = load_data()
+    # Convert generator to a list only for the benchmarking step
     sizes = [1000, 10000, 100000]
+    data = list(itertools.islice(load_data(), max(sizes)))
 
     strategies = {
         "Naive": NaiveMovingAverageStrategy,
@@ -105,6 +107,7 @@ def plot_results(results):
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     ax1.set_xscale('log')
+    ax1.set_yscale('log')
 
     # Memory plot
     for name in strategy_names:
@@ -117,7 +120,8 @@ def plot_results(results):
     ax2.legend()
     ax2.grid(True, alpha=0.3)
     ax2.set_xscale('log')
+    ax2.set_yscale('log')
 
     plt.tight_layout()
     plt.savefig('complexity_plots.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    # plt.show()
