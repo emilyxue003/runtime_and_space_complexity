@@ -32,7 +32,11 @@ def measure_memory(strategy_class, data, **kwargs):
         strategy.generate_signals(tick)
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
-    return peak / (1024 * 1024)  # bytes to MB
+    
+    peak_mb = peak / (1024 * 1024)  # bytes to MB
+    
+    # Prevent log(0) errors in Matplotlib by setting a tiny floor value
+    return max(peak_mb, 0.0001)
 
 def profile_cprofile(strategy_class, data, **kwargs):
     # cProfile the strategy execution
